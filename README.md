@@ -1,40 +1,92 @@
 # ImagineArt Checkout & Cancellation Clarity — A Product Case Study
 
-**TL;DR:** I analyzed 100 real, public customer reviews of ImagineArt (a generative-AI creative platform) and found that over half of all negative reviews — 53.3% — come down to one fixable problem: people don't understand what they're being charged, or how to cancel. This repo contains the full analysis, the product requirements document (PRD) for a fix, a proposed A/B test to validate it, and all the code used to collect and analyze the data.
+**TL;DR:** I analyzed 100 public Trustpilot reviews of ImagineArt (a generative-AI creative platform) and found that over half of the negative ones, 53.3%, are about one fixable problem: people don't understand what they're being charged, or how to cancel. This repo contains the analysis, a product requirements document (PRD) for a fix, a proposed A/B test to validate it, and the code used to collect and analyze the data.
 
-> This is an independent, self-directed practice project. It is **not affiliated with ImagineArt or its parent company, Vyro**. I built it to practice real product-management methodology — the same process a product or growth team would use — on real, publicly available data.
+> This is an independent, self-directed practice project. It is **not affiliated with ImagineArt or its parent company, Vyro**, and it uses **no internal ImagineArt data**, only reviews anyone can read on Trustpilot.
+
+---
+
+## How this was built (please read)
+
+I built this project with **Claude (Anthropic's AI assistant)** as my working partner, and I'm saying so up front:
+
+- **Claude helped write** the Python scripts, the first-pass review categories, the charts, and drafts of the PRD, hypothesis, and experiment design.
+- **I directed the project**: I chose the company and the problem space, decided the scope, ran every script on my own machine, collected the Trustpilot pages myself, and reviewed the outputs.
+- **The data is real and checkable.** The raw pages and the full categorized dataset are in this repo, so anyone can re-count the categories and challenge my labels.
+
+I'm applying for Associate Product Manager / Growth roles, and the job descriptions ask for people who use AI to make research, analysis, and reporting faster. This project is also an example of working that way.
 
 ---
 
 ## Why I built this
 
-I'm applying for Associate Product Manager / Growth roles, and I wanted to show, not just claim, that I can do the actual job: find a real problem using real evidence, write a clear hypothesis, define success metrics, and design a way to test it.
-
-Rather than use a textbook dataset, I picked a real company's real public customer feedback and worked through it exactly as I'd do on the job.
+I wanted to show, not just claim, that I can follow the loop a product or growth team follows: find a real problem in real evidence, write a testable hypothesis, define success metrics, and design a way to check whether a fix works.
 
 ---
 
-## The headline finding
+## The result
 
-Of 100 scraped reviews, 60 were negative or neutral (3 stars or below). I read every single one and manually categorized it (a keyword script made a first guess; I corrected every row by hand). The result:
+Of 100 reviews, 60 were negative or neutral (3 stars or below). Each was assigned to one category based on its text.
 
 ![Complaint categories chart](chart_complaint_categories.png)
 
-**53.3% of negative reviews (32 of 60) are billing or cancellation complaints** — more than triple the next-largest category.
+**32 of the 60 (53.3%) are billing or cancellation complaints.** The next-largest categories (Credit Value, Deceptive Search, Output Quality) have 5 each, so billing is about six times larger than any other.
 
-Digging further, those 32 complaints split into five distinct sub-problems — some fixable by a product/UX change, some needing a policy or legal owner instead. The full breakdown is in `problem and hypothesis.md`.
+Those 32 complaints break into five sub-problems:
+
+| Sub-problem | Fixable by a product change? |
+|---|---|
+| A cheap trial converts to a full charge | Yes |
+| Monthly vs. annual billing unclear at checkout | Yes |
+| No clear way to cancel | Yes |
+| Refund requests refused | No, policy and support issue |
+| "Unlimited" plans that turn out not to be unlimited | No, marketing and legal issue |
+
+**Conclusion:** the problem looks like **clarity at checkout and cancellation**, not refund generosity. A direct competitor (OpenArt) has a stricter refund policy and its users report similar complaints. The PRD therefore proposes a fix only for the three product-fixable sub-problems: a clear price-and-frequency line at checkout and a separate "Cancel Subscription" option.
+
+Full detail is in `problem and hypothesis.md`.
 
 ---
 
-## How I got there (the real process)
+## The process
 
-1. **Collected real data.** Scraped reviews from ImagineArt's public Trustpilot page using Python (`requests` + `BeautifulSoup` — see `scrape reviews.py`). When Trustpilot's bot-protection blocked automated requests, I used a fallback: saved the pages manually (`page1.html` through `page5.html`) and parsed them with `parse saved html.py` — same extraction logic, different source.
-2. **Categorized every review by hand.** `categorize reviews.py` made a first-pass keyword guess at each review's category; I then read all 100 myself and corrected every row, including several the script got wrong.
-3. **Found the pattern, checked it against a competitor.** Billing/Refund was the dominant category. I compared ImagineArt's refund policy to a direct competitor's (OpenArt) and found ImagineArt's policy is actually *more* generous — which ruled out "loosen the policy" as the fix and pointed to **clarity**, not leniency, as the real problem.
-4. **Wrote a hypothesis** — a specific, falsifiable prediction — scoped honestly to only the parts of the problem a product fix can actually solve.
-5. **Wrote a full PRD**: problem, goals, success metrics (including guardrails), user stories, and an explicit list of open questions and dependencies I'd need to resolve with a real team before this could ship.
-6. **Designed a proposed A/B test** (`ab test sample size.py`), including real statistics — required sample size and significance testing — clearly labeled as a *design*, not a result, since I don't have access to ImagineArt's production systems.
-7. **Mapped the wider growth funnel** (acquisition, activation, retention, referral) in `Funnel Opportunity.md`, honestly rating how strong the evidence was for each stage.
+1. **Collected the data.** Trustpilot blocked my automated request (`scrape reviews.py` returned a 403 error). I saved five review pages from my browser (`page1.html` to `page5.html`) and extracted the reviews with `parse saved html.py` (BeautifulSoup). The extraction is automated, but the page download was manual.
+2. **Categorized the reviews.** `categorize reviews.py` made a keyword-based first guess. Final categories were then assigned with Claude's help, using the full text of each review. The result is in `categorized_reviews.csv`.
+3. **Counted and charted** the pattern with `analyze.py`.
+4. **Checked a competitor** (OpenArt's public refund policy) to test whether the problem is policy or clarity.
+5. **Wrote a hypothesis**: if checkout clearly shows price and billing frequency, and a separate Cancel Subscription option exists, billing complaints tied to those three sub-problems will decrease.
+6. **Wrote a PRD** with a primary metric, guardrail metrics, user stories, non-goals, and open questions.
+7. **Designed an A/B test** and wrote the sample-size and significance code (`ab test sample size.py`).
+8. **Mapped the wider growth funnel** (acquisition, activation, retention, referral) in `Funnel Opportunity.md`, grading each opportunity by how strong the evidence is.
+
+---
+
+## What this project is, and isn't
+
+**Real:**
+- The review data and the counts behind the 53.3% figure
+- The competitor policy comparison, from public pages
+- The hypothesis, PRD, and experiment design
+- Code that runs end to end
+
+**Not real, or not done:**
+- **The A/B test was not run.** It is a design. I have no access to ImagineArt's production systems or users.
+- **The 3% baseline used in the sample-size calculation is an assumption.** The resulting figure (about 11,450 users per group) would change with ImagineArt's real ticket rate.
+- **No fix was built or shipped**, and no real experiment results exist.
+
+## Limitations
+
+- **Small sample:** 100 reviews, the most recent ones from a single site (Trustpilot). It shows a clear direction but is not a precise measure of all ImagineArt customers.
+- **Review bias:** people who write reviews skew toward strong feelings, and billing disputes are a common reason to write one.
+- **Judgment-based labels:** each review was put in one category, but some mention several issues. Other reviewers might label a few differently, so the dataset is included for checking.
+- **Metric caveat:** total billing tickets also include refund refusals and "unlimited" disputes, which the proposed fix doesn't address. A real test would tag tickets by reason and track the three fixable categories separately.
+
+## What I'd do next with real access
+
+1. Get the actual billing-ticket volume and reasons, and replace the assumed 3% baseline.
+2. Confirm whether "Delete Account" already cancels billing, since reviews disagree.
+3. Check how subscriptions are handled on iOS, where Apple controls the cancellation screen.
+4. Run the test with the guardrails defined in `PRD.md`.
 
 ---
 
@@ -42,70 +94,42 @@ Digging further, those 32 complaints split into five distinct sub-problems — s
 
 | File | What it is |
 |---|---|
-| `README.md` | This file |
-| `problem and hypothesis.md` | The evidence, the 5 sub-patterns, the hypothesis, competitive check |
-| `PRD.md` | The full product requirements document |
-| `Experiment Design.md` | Proposed A/B test: metrics, sample size, decision framework |
-| `Funnel Opportunity.md` | Acquisition/activation/retention/referral opportunities, evidence-graded |
-| `chart_complaint_categories.png` | The chart behind the headline finding |
-| `categorized_reviews.csv` | The real, hand-corrected dataset behind every number in this project |
-| `raw_reviews.csv` | The raw scraped data, before categorization |
-| `page1.html` – `page5.html` | The real Trustpilot pages used as the data source (saved locally after live scraping was blocked — see `parse saved html.py`) |
-| `scrape reviews.py` | Live scraper (requests + BeautifulSoup) |
-| `parse saved html.py` | Fallback scraper, reads the saved `page*.html` files |
-| `categorize reviews.py` | First-pass keyword categorizer |
-| `analyze.py` | Turns the categorized data into the chart + summary stats |
-| `ab test sample size.py` | Real sample-size & significance-test statistics for the proposed experiment |
+| `problem and hypothesis.md` | The evidence, the 5 sub-problems, the hypothesis, the competitor check |
+| `PRD.md` | The product requirements document |
+| `Experiment Design.md` | Proposed A/B test: metrics, sample size, decision rules |
+| `Funnel Opportunity.md` | Growth opportunities across the funnel, graded by evidence |
+| `chart_complaint_categories.png` | The chart above |
+| `categorized_reviews.csv` | The categorized dataset behind every number |
+| `raw_reviews.csv` | The extracted reviews before categorization |
+| `page1.html` – `page5.html` | The saved Trustpilot pages used as the source |
+| `scrape reviews.py` | Automated scraper (blocked by Trustpilot with a 403 error) |
+| `parse saved html.py` | Parser that reads the saved pages |
+| `categorize reviews.py` | Keyword-based first-pass categorizer |
+| `analyze.py` | Counts the categories and draws the chart |
+| `ab test sample size.py` | Sample-size and significance-test calculations |
 
-**If you only read one file, read `PRD.md`.** It links out to everything else.
+**If you read one file, read `PRD.md`.**
 
----
+## Run it yourself
 
-## For non-technical readers
-
-You don't need to touch any code to understand this project. Start with:
-1. The **headline finding** above (the chart).
-2. `problem and hypothesis.md` — what the problem actually is, in plain English.
-3. `PRD.md` — what I'd propose doing about it.
-
-## For technical readers
-
-Run the pipeline yourself, in order:
 ```
 pip install requests beautifulsoup4 pandas matplotlib scipy
-python "scrape reviews.py"        # or "parse saved html.py" if blocked
+python "parse saved html.py"
 python "categorize reviews.py"
 python analyze.py
 python "ab test sample size.py"
 ```
 
----
-
 ## Tech stack
 
-**Python** (`requests`, `beautifulsoup4`, `pandas`, `matplotlib`, `scipy`) for data collection, analysis, and statistics · **Markdown** for documentation · manual qualitative coding for categorization · **Git/GitHub** for version control.
-
----
-
-## Honesty notes — what this project is, and isn't
-
-- The review data is 100% real and independently verifiable — the raw HTML source pages are included in this repo.
-- The A/B test in `Experiment Design.md` is a **proposed design**, not a result. I do not have access to ImagineArt's production systems or user base, and the documents say so explicitly rather than implying otherwise.
-- The competitive check used public policy pages, not internal data.
-
-I'd rather this project be smaller and entirely true than impressive and partly fabricated.
-
----
+Python (`beautifulsoup4`, `pandas`, `matplotlib`, `scipy`; `requests` in the blocked scraper) · Markdown · Git/GitHub · Claude for AI-assisted coding, categorization, and drafting
 
 ## Skills demonstrated
 
-Real-world data collection (web scraping with a documented fallback plan) · qualitative coding and pattern-finding · competitive analysis · hypothesis writing · PRD authorship (problem, goals, guardrail metrics, user stories, scope, open questions) · A/B test design (sample size calculation, statistical significance) · growth-funnel analysis.
+Defining a problem from messy qualitative data · hypothesis writing · PRD authorship (metrics, guardrails, user stories, scope, open questions) · A/B test design (sample size, significance) · growth-funnel thinking · working with AI tools while being transparent about what they did
 
 ---
 
-## About
+Built by **Mairaj Fatima** · [GitHub](https://github.com/mairajfatima) · [LinkedIn](https://linkedin.com/in/mairaj-fatima-62207a310)
 
-Built by **Mairaj Fatima** — BI Associate, data analyst, and aspiring Product Manager.
-[GitHub](https://github.com/mairajfatima) · [LinkedIn](https://linkedin.com/in/mairaj-fatima-62207a310)
-
-Feedback welcome — if you work in product, growth, or billing UX and see something I've missed, please open an issue.
+Feedback welcome. If you work in product, growth, or billing UX and see something I've missed, please open an issue.
